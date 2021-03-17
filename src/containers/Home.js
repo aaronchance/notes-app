@@ -8,17 +8,12 @@ import { useAppContext } from "../libs/contextLib";
 import { onError } from "../libs/errorLib";
 import "./Home.css";
 import Form from "react-bootstrap/Form";
-import {CardElement} from "react-stripe-elements";
 import LoaderButton from "../components/LoaderButton";
-import {useFormFields} from "../libs/hooksLib";
 
 export default function Home() {
   const [notes, setNotes] = useState([]);
-  const [fields, handleFieldChange] = useFormFields({
-    query: "",
-    searchString: "",
-    replaceString: ""
-  });
+  const [searchString, setSearchString] = useState('');
+  const [replaceString, setReplaceString] = useState('');
   const { isAuthenticated } = useAppContext();
   const [isLoading, setIsLoading] = useState(true);
   const [isWorking, setIsWorking] = useState(false);
@@ -47,23 +42,22 @@ export default function Home() {
 
   async function handleSubmitClick(event) {
     event.preventDefault();
-
+    let search = searchString;
+    setSearchString('');
+    if(!search || !replaceString) return
     setIsWorking(true);
-    const replaceNotes = notes.filter(note => {
-      return note.content.toLowerCase().includes(fields.searchString.toLowerCase());
+    notes.filter(note => {
+      return note.content.toLowerCase().includes(searchString.toLowerCase());
     }).map(async (note) => {
-      const newContent = note.content.toLowerCase().replaceAll(fields.searchString, fields.replaceString);
-      const updateNote = {
-        content: newContent,
-        attachment: note.attachment
-      }
+      note.content = note.content.toLowerCase().replaceAll(searchString, replaceString);
       await API.put("notes", `/notes/${note.noteId}`, {
-        body: updateNote
+        body: note
       });
     })
     try {
       const notes = await loadNotes();
       setNotes(notes)
+      setSearchString('')
     } catch(e) {
       onError(e)
     }
@@ -74,30 +68,19 @@ export default function Home() {
     return (
       <>
         <Form className="BillingForm" onSubmit={handleSubmitClick}>
-          <Form.Group size="lg" controlId="query">
-            <Form.Control
-              type="text"
-              value={fields.query}
-              onChange={handleFieldChange}
-              placeholder="Search"
-            />
-          </Form.Group>
-        </Form>
-        <hr/>
-        <Form className="BillingForm" onSubmit={handleSubmitClick}>
           <Form.Group size="lg" controlId="searchString">
             <Form.Control
               type="text"
-              value={fields.searchString}
-              onChange={handleFieldChange}
+              value={searchString}
+              onChange={event => setSearchString(event.target.value)}
               placeholder="Search"
             />
           </Form.Group>
           <Form.Group size="lg" controlId="replaceString">
             <Form.Control
               type="text"
-              value={fields.replaceString}
-              onChange={handleFieldChange}
+              value={replaceString}
+              onChange={event => setReplaceString(event.target.value)}
               placeholder="Replace"
             />
           </Form.Group>
@@ -118,8 +101,8 @@ export default function Home() {
           </ListGroup.Item>
         </LinkContainer>
         {notes.filter(item => {
-          if (!fields.query) return true
-          return item.content.toLowerCase().includes(fields.query.toLowerCase())
+          if (!searchString) return true
+          return item.content.toLowerCase().includes(searchString.toLowerCase())
         })
           .map(({ noteId, content, createdAt }) => (
           <LinkContainer key={noteId} to={`/notes/${noteId}`}>
