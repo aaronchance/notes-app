@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { API } from "aws-amplify";
 import { Link } from "react-router-dom";
-import { BsPencilSquare } from "react-icons/bs";
+import {BsArrowRepeat, BsPencilSquare} from "react-icons/bs";
 import ListGroup from "react-bootstrap/ListGroup";
 import { LinkContainer } from "react-router-bootstrap";
 import { useAppContext } from "../libs/contextLib";
@@ -142,6 +142,11 @@ export default function Home() {
     return (
       <div className="notes">
         <h2 className="pb-3 mt-4 mb-3 border-bottom">Your Notes</h2>
+        {isLoading && (
+          <div className="loading text-center">
+            <BsArrowRepeat className="spinning" />
+          </div>
+        )}
         <ListGroup>{!isLoading && renderNotesList(notes)}</ListGroup>
       </div>
     );

@@ -7,3 +7,20 @@
   font-family: "Open Sans", sans-serif;
   font-weight: 600;
 }
+
+.loading .spinning {
+    color: #000;
+    margin-right: 7px;
+    font-size:14em;
+    top: 2px;
+    animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+    from {
+        transform: scale(1) rotate(0deg);
+    }
+    to {
+        transform: scale(1) rotate(360deg);
+    }
+}

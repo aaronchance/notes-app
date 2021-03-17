@@ -7,6 +7,7 @@ import { onError } from "../libs/errorLib";
 import { s3Upload } from "../libs/awsLib";
 import config from "../config";
 import "./Notes.css";
+import {BsArrowRepeat} from "react-icons/bs";
 
 export default function Notes() {
   const file = useRef(null);
@@ -14,7 +15,7 @@ export default function Notes() {
   const history = useHistory();
   const [note, setNote] = useState(null);
   const [content, setContent] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function Notes() {
 
         setContent(content);
         setNote(note);
+        setIsLoading(false);
       } catch (e) {
         onError(e);
       }
@@ -118,51 +120,58 @@ export default function Notes() {
   }
 
   return (
-    <div className="Notes">
-      {note && (
-        <Form onSubmit={handleSubmit}>
-          <Form.Group controlId="content">
-            <Form.Control
-              as="textarea"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-            />
-          </Form.Group>
-          <Form.Group controlId="file">
-            <Form.Label>Attachment</Form.Label>
-            {note.attachment && (
-              <p>
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href={note.attachmentURL}
-                >
-                  {formatFilename(note.attachment)}
-                </a>
-              </p>
-            )}
-            <Form.Control onChange={handleFileChange} type="file" />
-          </Form.Group>
-          <LoaderButton
-            block
-            size="lg"
-            type="submit"
-            isLoading={isLoading}
-            disabled={!validateForm()}
-          >
-            Save
-          </LoaderButton>
-          <LoaderButton
-            block
-            size="lg"
-            variant="danger"
-            onClick={handleDelete}
-            isLoading={isDeleting}
-          >
-            Delete
-          </LoaderButton>
-        </Form>
+    <>
+      {isLoading && (
+        <div className="loading text-center">
+          <BsArrowRepeat className="spinning" />
+        </div>
       )}
-    </div>
+      <div className="Notes">
+        {note && (
+          <Form onSubmit={handleSubmit}>
+            <Form.Group controlId="content">
+              <Form.Control
+                as="textarea"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group controlId="file">
+              <Form.Label>Attachment</Form.Label>
+              {note.attachment && (
+                <p>
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={note.attachmentURL}
+                  >
+                    {formatFilename(note.attachment)}
+                  </a>
+                </p>
+              )}
+              <Form.Control onChange={handleFileChange} type="file" />
+            </Form.Group>
+            <LoaderButton
+              block
+              size="lg"
+              type="submit"
+              isLoading={isLoading}
+              disabled={!validateForm()}
+            >
+              Save
+            </LoaderButton>
+            <LoaderButton
+              block
+              size="lg"
+              variant="danger"
+              onClick={handleDelete}
+              isLoading={isDeleting}
+            >
+              Delete
+            </LoaderButton>
+          </Form>
+        )}
+      </div>
+    </>
   );
 }

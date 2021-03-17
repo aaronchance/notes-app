@@ -2,3 +2,19 @@
   height: 300px;
   font-size: 1.5rem;
 }
+.loading .spinning {
+    color: #000;
+    margin-right: 7px;
+    font-size:14em;
+    top: 2px;
+    animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+    from {
+        transform: scale(1) rotate(0deg);
+    }
+    to {
+        transform: scale(1) rotate(360deg);
+    }
+}
