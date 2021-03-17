@@ -7,12 +7,21 @@ import { LinkContainer } from "react-router-bootstrap";
 import { useAppContext } from "../libs/contextLib";
 import { onError } from "../libs/errorLib";
 import "./Home.css";
+import Form from "react-bootstrap/Form";
+import {CardElement} from "react-stripe-elements";
+import LoaderButton from "../components/LoaderButton";
+import {useFormFields} from "../libs/hooksLib";
 
 export default function Home() {
   const [notes, setNotes] = useState([]);
+  const [fields, handleFieldChange] = useFormFields({
+    query: "",
+    searchString: "",
+    replaceString: ""
+  });
   const { isAuthenticated } = useAppContext();
   const [isLoading, setIsLoading] = useState(true);
-
+  const [isWorking, setIsWorking] = useState(false);
   useEffect(() => {
     async function onLoad() {
       if (!isAuthenticated) {
@@ -36,16 +45,83 @@ export default function Home() {
     return API.get("notes", "/notes");
   }
 
+  async function handleSubmitClick(event) {
+    event.preventDefault();
+
+    setIsWorking(true);
+    const replaceNotes = notes.filter(note => {
+      return note.content.toLowerCase().includes(fields.searchString.toLowerCase());
+    }).map(async (note) => {
+      const newContent = note.content.toLowerCase().replaceAll(fields.searchString, fields.replaceString);
+      const updateNote = {
+        content: newContent,
+        attachment: note.attachment
+      }
+      await API.put("notes", `/notes/${note.noteId}`, {
+        body: updateNote
+      });
+    })
+    try {
+      const notes = await loadNotes();
+      setNotes(notes)
+    } catch(e) {
+      onError(e)
+    }
+    setIsWorking(false);
+  }
+
   function renderNotesList(notes) {
     return (
       <>
+        <Form className="BillingForm" onSubmit={handleSubmitClick}>
+          <Form.Group size="lg" controlId="query">
+            <Form.Control
+              type="text"
+              value={fields.query}
+              onChange={handleFieldChange}
+              placeholder="Search"
+            />
+          </Form.Group>
+        </Form>
+        <hr/>
+        <Form className="BillingForm" onSubmit={handleSubmitClick}>
+          <Form.Group size="lg" controlId="searchString">
+            <Form.Control
+              type="text"
+              value={fields.searchString}
+              onChange={handleFieldChange}
+              placeholder="Search"
+            />
+          </Form.Group>
+          <Form.Group size="lg" controlId="replaceString">
+            <Form.Control
+              type="text"
+              value={fields.replaceString}
+              onChange={handleFieldChange}
+              placeholder="Replace"
+            />
+          </Form.Group>
+          <LoaderButton
+            block
+            size="lg"
+            type="submit"
+            isLoading={isWorking}
+            disabled={isWorking}
+          >
+            { isWorking ? 'Working on it...' : 'Search & Replace' }
+          </LoaderButton>
+        </Form>
         <LinkContainer to="/notes/new">
           <ListGroup.Item action className="py-3 text-nowrap text-truncate">
             <BsPencilSquare size={17} />
             <span className="ml-2 font-weight-bold">Create a new note</span>
           </ListGroup.Item>
         </LinkContainer>
-        {notes.map(({ noteId, content, createdAt }) => (
+        {notes.filter(item => {
+          if (!fields.query) return true
+          return item.content.toLowerCase().includes(fields.query.toLowerCase())
+        })
+          .map(({ noteId, content, createdAt }) => (
           <LinkContainer key={noteId} to={`/notes/${noteId}`}>
             <ListGroup.Item action>
               <span className="font-weight-bold">
